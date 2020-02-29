@@ -74,7 +74,8 @@ class KNearestNeighbor(object):
         # not use a loop over dimension.                                    #
         #####################################################################
 
-        dists[i, j] = np.sqrt(np.sum(np.square(X[i,:] - self.X_train[j,:])))
+        # (**2) computes faster than np.square in general case
+        dists[i, j] = np.sqrt(np.sum((X[i,:] - self.X_train[j,:])**2))
 
         #####################################################################
         #                       END OF YOUR CODE                            #
@@ -97,7 +98,9 @@ class KNearestNeighbor(object):
       # Compute the L2 distance between the i-th test point and all training#
       # points, and store the result in dists[i, :].                        #
       #######################################################################
-      pass
+
+      dists[i, :] = np.sqrt(np.sum((X[i, :] - self.X_train)**2, axis=1))
+
       #######################################################################
       #                         END OF YOUR CODE                            #
       #######################################################################
@@ -126,7 +129,19 @@ class KNearestNeighbor(object):
     #       solution is to use equation (x - y)^2 = x^2 - 2xy + y^2. Try to #
     #       formulate it using matrix multiplication and two broadcast sums.#
     #########################################################################
-    pass
+
+    # Using keepdims in order to not loose dimensions so broadcasting works
+    dists = np.sum(self.X_train**2, axis=1) \
+            + np.sum(X**2, axis=1, keepdims=True) \
+            - 2 * np.dot(X, self.X_train.T)
+
+    # Actually, we can omit square root operation,
+    # because square root function is smooth,
+    # thus optimizing L2**2-norm is the same as L2-norm.
+    # Moreover, it is a computationally expensive operation,
+    # so performance can be increased omiting this
+    dists = np.sqrt(dists)
+
     #########################################################################
     #                         END OF YOUR CODE                              #
     #########################################################################
