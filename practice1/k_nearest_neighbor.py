@@ -76,7 +76,7 @@ class KNearestNeighbor(object):
 
         dists[i, j] = np.sqrt(np.sum(np.square(X[i,:] - self.X_train[j,:])))
 
-        s#####################################################################
+        #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
     return dists
@@ -159,11 +159,9 @@ class KNearestNeighbor(object):
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
 
-      # find the closest training points
-      idx = np.argsort(dists[i, :])
-
-      # take K closest training points indices
-      closest_y = idx[:k]
+      # Sort distances and get k closest labels for dists[i]
+      closest_y_idx = np.argsort(dists[i])[:k]
+      closest_y = self.y_train[closest_y_idx]
 
       #########################################################################
       # TODO:                                                                 #
@@ -173,12 +171,9 @@ class KNearestNeighbor(object):
       # label. Hint: Look up the functions numpy.bincount and numpy.argmax.   #
       #########################################################################
 
-      # count the frequency of each class
-      class_frequency = np.bincount(closest_y)
-
-      # predict label as the most frequent class
-      most_frequent_class = np.argmax(class_frequency)
-      y_pred[i] = self.y_train[most_frequent_class]
+      # Count label occurance and assign the most frequent label
+      label_freq = np.bincount(closest_y)
+      y_pred[i] = np.argmax(label_freq)
 
       #########################################################################
       #                           END OF YOUR CODE                            #
