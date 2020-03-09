@@ -40,33 +40,24 @@ def softmax_loss_naive(W, X, y, reg):
     # TODO: should use explicit loops here
 
     # compute prediction scores
-    # z_j = np.dot(x, W)
-
-    z_j = np.zeros((W.shape[1],))
-
-    for k, x_k in enumerate(x):
-      z_j += np.sum(x_k * W[k])
-      # for j, _ in enumerate(z_j):
-        # z_j[j] = np.sum(x_k * W[k][j])
+    z_j = np.dot(x, W)
 
     # compute softmax activation
     e_z = np.exp(z_j - np.max(z_j))
-    p = e_z / np.sum(e_z, axis=0)
+    p = e_z / np.sum(e_z)
 
-    # compute loss
-    loss += -np.sum(y_encoded[i] * np.log(p))
-    # for j, p_j in enumerate(p):
-    #   loss += -np.sum(y_encoded[i][j] * np.log(p_j))
+    # compute loss, only y_i = 1 is important, where i = c, as y_j = 0, i != j
+    class_idx = np.nonzero(y_encoded[i])[0]
+    loss -= np.log(p[class_idx])
 
     #############################################################################
     # TODO: Compute the gradient using explicit loops and store the sum over    #
     # samples in dW.                                                            #
     #############################################################################
 
-    # for k, x_k in enumerate(x):
-      ## dW += (p - y_encoded[i]) * x_k
-      # for j, p_j in enumerate(p):
-        # dW += (p_j - y_encoded[i][j]) * x_k
+    for k, x_k in enumerate(x):
+      dW[k] += (p - y_encoded[i]) * x_k
+
     #############################################################################
     #                          END OF YOUR CODE                                 #
     #############################################################################
@@ -97,6 +88,7 @@ def softmax_loss_vectorized(W, X, y, reg):
   # Make sure you take the average.                                           #
   # If you are not careful with softmax, you migh run into numeric instability#
   #############################################################################
+  # np.matmul(X, W)
   pass
   #############################################################################
   #                          END OF YOUR CODE                                 #
