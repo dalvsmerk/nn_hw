@@ -93,18 +93,20 @@ def softmax_loss_vectorized(W, X, y, reg):
   y_encoded[np.arange(y.shape[0]), y] = 1
 
   # compute prediction scores
-  Z = np.matmul(X, W)
+  Z = np.dot(X, W)
 
   # compute prediction probabilities
-  P = np.exp(Z - np.max(Z, axis=0))
-  P = P / np.sum(P, axis=0)
+  stable_e_z = Z - np.max(Z, axis=1)[:, np.newaxis]
+  e_z = np.exp(stable_e_z[np.arange(X.shape[0]), y])
+
+  activation = e_z / np.sum(np.exp(stable_e_z), axis=1)
 
   # compute loss
-  log_likelihood = -np.log(P**y_encoded)
-  loss = np.sum(log_likelihood) / X.shape[0]
+  loss = -np.sum(np.log(activation)) / X.shape[0]
 
   # compute gradient
-  dW = np.matmul(X.T, P - y_encoded) / X.shape[0]
+  y_pred = np.exp(stable_e_z) / np.sum(np.exp(stable_e_z), axis=1, keepdims=True)
+  dW = np.dot(X.T, y_pred - y_encoded) / X.shape[0]
 
   #############################################################################
   #                          END OF YOUR CODE                                 #
