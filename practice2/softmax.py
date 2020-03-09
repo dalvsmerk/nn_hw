@@ -88,8 +88,24 @@ def softmax_loss_vectorized(W, X, y, reg):
   # Make sure you take the average.                                           #
   # If you are not careful with softmax, you migh run into numeric instability#
   #############################################################################
-  # np.matmul(X, W)
-  pass
+  # one-hot encode target labels
+  y_encoded = np.zeros((y.shape[0], y.max() + 1))
+  y_encoded[np.arange(y.shape[0]), y] = 1
+
+  # compute prediction scores
+  Z = np.matmul(X, W)
+
+  # compute prediction probabilities
+  P = np.exp(Z - np.max(Z, axis=0))
+  P = P / np.sum(P, axis=0)
+
+  # compute loss
+  log_likelihood = -np.log(P**y_encoded)
+  loss = np.sum(log_likelihood) / X.shape[0]
+
+  # compute gradient
+  dW = np.matmul(X.T, P - y_encoded) / X.shape[0]
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
