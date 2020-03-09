@@ -25,6 +25,10 @@ def softmax_loss_naive(W, X, y, reg):
   loss = 0.0
   dW = np.zeros_like(W)
 
+  # one-hot encode target labels
+  y_encoded = np.zeros((y.shape[0], y.max() + 1))
+  y_encoded[np.arange(y.shape[0]), y] = 1
+
   # In this naive implementation we have a for loop over the N samples
   for i, x in enumerate(X):
     #############################################################################
@@ -34,12 +38,35 @@ def softmax_loss_naive(W, X, y, reg):
     # numeric instability, because exp(a) is huge if a is large.                #
     #############################################################################
     # TODO: should use explicit loops here
-    pass
+
+    # compute prediction scores
+    # z_j = np.dot(x, W)
+
+    z_j = np.zeros((W.shape[1],))
+
+    for k, x_k in enumerate(x):
+      z_j += np.sum(x_k * W[k])
+      # for j, _ in enumerate(z_j):
+        # z_j[j] = np.sum(x_k * W[k][j])
+
+    # compute softmax activation
+    e_z = np.exp(z_j - np.max(z_j))
+    p = e_z / np.sum(e_z, axis=0)
+
+    # compute loss
+    loss += -np.sum(y_encoded[i] * np.log(p))
+    # for j, p_j in enumerate(p):
+    #   loss += -np.sum(y_encoded[i][j] * np.log(p_j))
+
     #############################################################################
     # TODO: Compute the gradient using explicit loops and store the sum over    #
     # samples in dW.                                                            #
     #############################################################################
-    pass
+
+    # for k, x_k in enumerate(x):
+      ## dW += (p - y_encoded[i]) * x_k
+      # for j, p_j in enumerate(p):
+        # dW += (p_j - y_encoded[i][j]) * x_k
     #############################################################################
     #                          END OF YOUR CODE                                 #
     #############################################################################
@@ -80,4 +107,3 @@ def softmax_loss_vectorized(W, X, y, reg):
   dW += reg * 2 * W
 
   return loss, dW
-
