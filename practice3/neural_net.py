@@ -76,11 +76,19 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    # Compute scores from first layer
+    H1 = np.dot(X, W1 + b1)
+
+    # Compute ReLu
+    R1 = H1 # for better readability
+    R1[H1 < 0] = 0.0
+
+    # Compute scores from second layer
+    scores = np.dot(R1, W2 + b2)
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
-    
+
     # If the targets are not given then jump out, we're done
     if y is None:
       return scores
@@ -93,11 +101,27 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    pass
+    # Compute class probabilities
+    scores_stable = scores - np.max(scores, axis=1)[:, np.newaxis]
+    e_scores = np.exp(scores_stable)
+
+    S1 = e_scores / np.sum(e_scores, axis=1)[:, np.newaxis]
+
+    # Take the probabilities only of relevant classes
+    S1 = S1[np.arange(N), y]
+
+    # Compute data loss
+    data_loss = -np.sum(np.log(S1)) / N
+
+    # Compute regularization loss
+    reg_loss = np.sum(W1**2) + np.sum(W2**2)
+
+    loss = data_loss + reg*reg_loss
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
-    
+
     # Backward pass: compute gradients
     grads = {}
     #############################################################################
@@ -215,5 +239,3 @@ class TwoLayerNet(object):
     ###########################################################################
 
     return y_pred
-
-
