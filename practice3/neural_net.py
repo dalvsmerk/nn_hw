@@ -108,10 +108,10 @@ class TwoLayerNet(object):
     S1 = e_scores / np.sum(e_scores, axis=1)[:, np.newaxis]
 
     # Take the probabilities only of relevant classes
-    S1 = S1[np.arange(N), y]
+    true_S1 = S1[np.arange(N), y]
 
     # Compute loss
-    data_loss = -np.sum(np.log(S1)) / N
+    data_loss = -np.sum(np.log(true_S1)) / N
     reg_loss = np.sum(W1**2) + np.sum(W2**2)
 
     loss = data_loss + reg*reg_loss
@@ -127,7 +127,17 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    y_encoded = np.zeros((N, y.max() + 1))
+    y_encoded[np.arange(N), y] = 1.0
+
+    partial_A2 = S1 - y_encoded
+    prod = np.dot(partial_A2, W2.T)
+    elem_wise = np.multiply(prod, H1)
+
+    grads['W1'] = np.dot(X.T, elem_wise) / N
+    # grad['b1'] = np.multiply(np.dot((partial_A2), W2.T), H1) / N
+    # grad['b2'] = np.dot(np.ones(N).T, (partial_A2 / N))
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
