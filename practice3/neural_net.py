@@ -77,14 +77,15 @@ class TwoLayerNet(object):
     # shape (N, C).                                                             #
     #############################################################################
     # Compute scores from first layer
-    H1 = np.dot(X, W1) + b1
+    A1 = np.dot(X, W1) + b1
 
     # Compute ReLu
-    R1 = H1 # for better readability
-    R1[H1 < 0] = 0.0
+    # H1 = np.copy(A1) # for better readability
+    # H1[A1 <= 0.0] = 0.0
+    H1 = np.maximum(A1, 0.0)
 
     # Compute scores from second layer
-    scores = np.dot(R1, W2) + b2
+    scores = np.dot(H1, W2) + b2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -111,7 +112,7 @@ class TwoLayerNet(object):
     true_S1 = S1[np.arange(N), y]
 
     # Compute loss
-    data_loss = -np.sum(np.log(true_S1)) / N
+    data_loss = -np.sum(np.log(1e-18 + true_S1)) / N
     reg_loss = np.sum(W1**2) + np.sum(W2**2)
 
     loss = data_loss + reg*reg_loss
@@ -130,13 +131,27 @@ class TwoLayerNet(object):
     y_encoded = np.zeros((N, y.max() + 1))
     y_encoded[np.arange(N), y] = 1.0
 
-    partial_A2 = S1 - y_encoded
-    prod = np.dot(partial_A2, W2.T)
-    elem_wise = np.multiply(prod, H1)
+    pred = S1 - y_encoded
+    # ones_column = np.ones(shape=(N,)).T
 
-    grads['W1'] = np.dot(X.T, elem_wise) / N
-    # grad['b1'] = np.multiply(np.dot((partial_A2), W2.T), H1) / N
-    # grad['b2'] = np.dot(np.ones(N).T, (partial_A2 / N))
+    dH1_dA1 = H1.copy()
+    dH1_dA1[dH1_dA1 > 0.0] = 1.0
+    dH1_dA1[dH1_dA1 <= 0.0] = 0.0
+
+    dL_dA1 = np.multiply(np.dot(pred, W2.T), dH1_dA1)
+
+    grad_W1 = np.dot(X.T, dL_dA1) / N
+    grad_W2 = np.dot(H1.T, pred) / N
+    grad_b1 = np.sum(dL_dA1, axis=0) / N
+    grad_b2 = np.sum(pred, axis=0) / N
+    # grad_b2 = pred / N
+    # grad_b1 = np.dot(ones_column, dL_dA1) / N
+    # grad_b2 = np.dot(ones_column, pred) / N
+
+    grads['W1'] += 2 * reg * grad_W1
+    grads['W2'] += 2 * reg * grad_W2
+    grads['b1'] += 2 * reg * grad_b1
+    grads['b2'] += 2 * reg * grad_b2
 
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -251,7 +266,7 @@ class TwoLayerNet(object):
     R1 = H1
 
     # ReLu
-    R1[H1 < 0] = 0.0
+    R1[H1 <= 0] = 0.0
 
     # Scores from second layer
     scores = np.dot(R1, self.params['W2']) + self.params['b2']
