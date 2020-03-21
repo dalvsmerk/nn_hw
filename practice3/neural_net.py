@@ -126,23 +126,25 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
+    # Compute 1/N * (P - Y)
     y_encoded = np.zeros((N, y.max() + 1))
     y_encoded[np.arange(N), y] = 1.0
-    dP = P - y_encoded
 
-    # dP = P
-    # dP[np.arange(N), y] -= 1.0
+    dP = P - y_encoded
     dP /= N
 
+    # Backpropagate on second layer
     dW2 = np.dot(H1.T, dP)
     db2 = np.sum(dP, axis=0)
 
+    # Backprobagate on first layer
     dA1 = np.dot(dP, W2.T)
     dA1[A1 <= 0] = 0
 
     dW1 = np.dot(X.T, dA1)
     db1 = np.sum(dA1, axis=0)
 
+    # Regularize weights
     dW2 += reg * 2 * W2
     dW1 += reg * 2 * W1
 
