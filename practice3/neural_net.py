@@ -80,9 +80,7 @@ class TwoLayerNet(object):
     A1 = np.dot(X, W1) + b1
 
     # Compute ReLu
-    # H1 = np.copy(A1) # for better readability
-    # H1[A1 <= 0.0] = 0.0
-    H1 = np.maximum(A1, 0.0)
+    H1 = np.maximum(0.0, A1)
 
     # Compute scores from second layer
     scores = np.dot(H1, W2) + b2
@@ -106,10 +104,10 @@ class TwoLayerNet(object):
     scores_stable = scores - np.max(scores, axis=1)[:, np.newaxis]
     e_scores = np.exp(scores_stable)
 
-    S1 = e_scores / np.sum(e_scores, axis=1)[:, np.newaxis]
+    P = e_scores / e_scores.sum(axis=1)[:, np.newaxis]
 
     # Take the probabilities only of relevant classes
-    true_S1 = S1[np.arange(N), y]
+    true_S1 = P[np.arange(N), y]
 
     # Compute loss
     data_loss = -np.sum(np.log(1e-18 + true_S1)) / N
@@ -122,7 +120,7 @@ class TwoLayerNet(object):
     #############################################################################
 
     # Backward pass: compute gradients
-    grads = self.params
+    grads = self.params.copy()
     #############################################################################
     # TODO: Compute the backward pass, computing the derivatives of the weights #
     # and biases. Store the results in the grads dictionary. For example,       #
@@ -130,28 +128,28 @@ class TwoLayerNet(object):
     #############################################################################
     y_encoded = np.zeros((N, y.max() + 1))
     y_encoded[np.arange(N), y] = 1.0
+    dP = P - y_encoded
 
-    pred = S1 - y_encoded
-    # ones_column = np.ones(shape=(N,)).T
+    # dP = P
+    # dP[np.arange(N), y] -= 1.0
+    dP /= N
 
-    dH1_dA1 = H1.copy()
-    dH1_dA1[dH1_dA1 > 0.0] = 1.0
-    dH1_dA1[dH1_dA1 <= 0.0] = 0.0
+    dW2 = np.dot(H1.T, dP)
+    db2 = np.sum(dP, axis=0)
 
-    dL_dA1 = np.multiply(np.dot(pred, W2.T), dH1_dA1)
+    dA1 = np.dot(dP, W2.T)
+    dA1[A1 <= 0] = 0
 
-    grad_W1 = np.dot(X.T, dL_dA1) / N
-    grad_W2 = np.dot(H1.T, pred) / N
-    grad_b1 = np.sum(dL_dA1, axis=0) / N
-    grad_b2 = np.sum(pred, axis=0) / N
-    # grad_b2 = pred / N
-    # grad_b1 = np.dot(ones_column, dL_dA1) / N
-    # grad_b2 = np.dot(ones_column, pred) / N
+    dW1 = np.dot(X.T, dA1)
+    db1 = np.sum(dA1, axis=0)
 
-    grads['W1'] += 2 * reg * grad_W1
-    grads['W2'] += 2 * reg * grad_W2
-    grads['b1'] += 2 * reg * grad_b1
-    grads['b2'] += 2 * reg * grad_b2
+    dW2 += reg * 2 * W2
+    dW1 += reg * 2 * W1
+
+    grads['W2'] = dW2
+    grads['b2'] = db2
+    grads['W1'] = dW1
+    grads['b1'] = db1
 
     #############################################################################
     #                              END OF YOUR CODE                             #
