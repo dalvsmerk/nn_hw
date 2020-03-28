@@ -8,7 +8,7 @@ def affine_forward(x, w, b):
 
     The input x has shape (N, d_1, ..., d_k) and contains a minibatch of N
     examples, where each example x[i] has shape (d_1, ..., d_k). For example,
-    batch of 500 RGB CIFAR-10 images would have shape (500, 32, 32, 3). We 
+    batch of 500 RGB CIFAR-10 images would have shape (500, 32, 32, 3). We
     will reshape each input into a vector of dimension D = d_1 * ... * d_k,
     and then transform it to an output vector of dimension M.
 
@@ -26,7 +26,11 @@ def affine_forward(x, w, b):
     # TODO: Implement the affine forward pass. Store the result in out. You   #
     # will need to reshape the input into rows.                               #
     ###########################################################################
-    pass
+    N = x.shape[0]
+    D = np.prod(x.shape[1:])
+    X = x.reshape(N, D)
+
+    out = np.dot(X, w) + b
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -55,7 +59,13 @@ def affine_backward(dout, cache):
     # TODO: Implement the affine backward pass. Do not forget to reshape your #
     # dx to match the dimensions of x.                                        #
     ###########################################################################
-    pass
+    N = x.shape[0]
+    D = np.prod(x.shape[1:])
+    X = x.reshape(N, D)
+
+    dw = np.dot(X.T, dout)
+    dx = np.dot(dout, w.T).reshape(x.shape)
+    db = np.sum(dout, axis=0)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
