@@ -47,7 +47,10 @@ class TwoLayerNet(object):
         # and biases using the keys 'W2' and 'b2'.                                 #
         # See also: http://cs231n.github.io/neural-networks-2/#init                #
         ############################################################################
-        pass
+        self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dim)
+        self.params['b1'] = np.zeros(hidden_dim)
+        self.params['W2'] = weight_scale * np.random.randn(hidden_dim, num_classes)
+        self.params['b2'] = np.zeros(num_classes)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -77,7 +80,9 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
-        pass
+        a1, fc1_cache = affine_forward(X, self.params['W1'], self.params['b1'])
+        h1, h1_cache = relu_forward(a1)
+        scores, fc2_cache = affine_forward(h1, self.params['W2'], self.params['b2'])
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -97,7 +102,23 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, dx = softmax_loss(scores, y)
+        dx2, dw2, db2 = affine_backward(dx, fc2_cache)
+        dh = relu_backward(dx2, h1_cache)
+        dx1, dw1, db1 = affine_backward(dh, fc1_cache)
+
+        W1, W2 = self.params['W1'], self.params['W2']
+
+        # compute regularization loss
+        reg_loss = 0.5 * self.reg * (np.sum(W1**2) + np.sum(W2**2))
+        loss = loss + reg_loss
+
+        # add regularization gradient with respect to W2
+        grads['W2'] = dw2 + self.reg * W2
+        grads['b2'] = db2
+        # add regularization gradient with respect to W1
+        grads['W1'] = dw1 + self.reg * W1
+        grads['b1'] = db1
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

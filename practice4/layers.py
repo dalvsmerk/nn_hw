@@ -59,10 +59,12 @@ def affine_backward(dout, cache):
     # TODO: Implement the affine backward pass. Do not forget to reshape your #
     # dx to match the dimensions of x.                                        #
     ###########################################################################
+    # flatten input
     N = x.shape[0]
     D = np.prod(x.shape[1:])
     X = x.reshape(N, D)
 
+    # calculate gradients
     dw = np.dot(X.T, dout)
     dx = np.dot(dout, w.T).reshape(x.shape)
     db = np.sum(dout, axis=0)
