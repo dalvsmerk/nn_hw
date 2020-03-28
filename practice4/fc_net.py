@@ -267,6 +267,7 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         x = X
+        cache = {'fc': [], 'relu': []}
 
         # compute forward pass until the last layer
         # because ReLu isn't applied to the last layer activations
@@ -274,14 +275,18 @@ class FullyConnectedNet(object):
           layer = layer_idx + 1
           W, b = self.params['W%d' % layer], self.params['b%d' % layer]
 
+          # Linear activation
           out_x, fc_cache = affine_forward(x, W, b)
+          cache['fc'].append(fc_cache)
 
-          # TODO: batch norm here
+          # TODO: Batch normalization
           batch_norm_out = out_x
 
+          # ReLu activation
           relu_out, relu_cache = relu_forward(batch_norm_out)
+          cache['relu'].append(relu_cache)
 
-          # TODO: dropout here
+          # TODO: Dropout
           dropout_out = relu_out
 
           x = dropout_out
@@ -291,6 +296,7 @@ class FullyConnectedNet(object):
         W, b = self.params['W%d' % last_layer], self.params['b%d' % last_layer]
 
         scores, scores_cache = affine_forward(x, W, b)
+        cache['fc'].append(scores_cache)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -314,7 +320,44 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, dx = softmax_loss(scores, y)
+        reg_loss = 0.0
+
+        last_layer_idx = self.num_layers - 1
+        last_layer_cache = cache['fc'][last_layer_idx]
+
+        # backpropagate the last layer without batch norm, relu and dropout
+        dx, dw, db = affine_backward(dx, last_layer_cache)
+        w = last_layer_cache[1]
+        grads['W%d' % self.num_layers] = dw + self.reg * w
+        grads['b%d' % self.num_layers] = db
+
+        reg_loss += np.sum(w**2)
+
+        # backpropagate on the other layers, skipping the last one
+        for layer_idx in reversed(range(self.num_layers - 1)):
+          layer = (layer_idx + 1)
+
+          # TODO: dropout backprop
+          dd = dx
+
+          relu_cache = cache['relu'][layer_idx]
+          dh = relu_backward(dd, relu_cache)
+
+          # TODO: batchnorm backprop
+          dbatch = dh
+
+          fc_cache = cache['fc'][layer_idx]
+          w = fc_cache[1]
+          dx, dw, db = affine_backward(dbatch, fc_cache)
+
+          grads['W%d' % layer] = dw + self.reg * w
+          grads['b%d' % layer] = db
+
+          reg_loss += np.sum(w**2)
+
+        loss = loss + 0.5 * self.reg * reg_loss
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
