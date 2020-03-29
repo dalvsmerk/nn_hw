@@ -267,7 +267,7 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         x = X
-        cache = {'fc': [], 'relu': []}
+        cache = {'fc': [], 'relu': [], 'dropout': []}
 
         # compute forward pass until the last layer
         # because ReLu isn't applied to the last layer activations
@@ -286,8 +286,10 @@ class FullyConnectedNet(object):
           relu_out, relu_cache = relu_forward(batch_norm_out)
           cache['relu'].append(relu_cache)
 
-          # TODO: Dropout
           dropout_out = relu_out
+          if self.use_dropout:
+            dropout_out, dropout_cache = dropout_forward(relu_out, self.dropout_param)
+            cache['dropout'].append(dropout_cache)
 
           x = dropout_out
 
@@ -338,8 +340,11 @@ class FullyConnectedNet(object):
         for layer_idx in reversed(range(self.num_layers - 1)):
           layer = (layer_idx + 1)
 
-          # TODO: dropout backprop
           dd = dx
+
+          if self.use_dropout:
+            dropout_cache = cache['dropout'][layer_idx]
+            dd = dropout_backward(dx, dropout_cache)
 
           relu_cache = cache['relu'][layer_idx]
           dh = relu_backward(dd, relu_cache)
