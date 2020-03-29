@@ -102,6 +102,7 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
+        # Compute backward pass
         loss, dx = softmax_loss(scores, y)
         dx2, dw2, db2 = affine_backward(dx, fc2_cache)
         dh = relu_backward(dx2, h1_cache)
@@ -109,14 +110,15 @@ class TwoLayerNet(object):
 
         W1, W2 = self.params['W1'], self.params['W2']
 
-        # compute regularization loss
+        # Compute regularization loss
         reg_loss = 0.5 * self.reg * (np.sum(W1**2) + np.sum(W2**2))
         loss = loss + reg_loss
 
-        # add regularization gradient with respect to W2
+        # Add regularization gradient with respect to W2
         grads['W2'] = dw2 + self.reg * W2
         grads['b2'] = db2
-        # add regularization gradient with respect to W1
+
+        # Add regularization gradient with respect to W1
         grads['W1'] = dw1 + self.reg * W1
         grads['b1'] = db1
         ############################################################################
@@ -186,11 +188,11 @@ class FullyConnectedNet(object):
         ############################################################################
         init_weights = lambda n, m: weight_scale * np.random.randn(n, m)
 
-        # initialize first layer parameters
+        # Initialize first layer parameters
         self.params['W1'] = init_weights(input_dim, hidden_dims[0])
         self.params['b1'] = np.zeros(hidden_dims[0])
 
-        # initialize hidden layers parameters
+        # Initialize hidden layers parameters
         if len(hidden_dims) > 1:
           for i, hidden_num in enumerate(hidden_dims[1:]):
             layer_idx = i + 1
@@ -201,7 +203,7 @@ class FullyConnectedNet(object):
             self.params['W%d' % layer] = W
             self.params['b%d' % layer] = b
 
-        # initialize last layer parameters
+        # Initialize last layer parameters
         last_hidden_dim_idx = len(hidden_dims) - 1
         last_hidden_dim = hidden_dims[last_hidden_dim_idx]
         last_layer_idx = last_hidden_dim_idx + 2
@@ -269,7 +271,7 @@ class FullyConnectedNet(object):
         x = X
         cache = {'fc': [], 'relu': [], 'dropout': []}
 
-        # compute forward pass until the last layer
+        # Compute forward pass until the last layer,
         # because ReLu isn't applied to the last layer activations
         for layer_idx in range(self.num_layers - 1):
           layer = layer_idx + 1
@@ -286,6 +288,7 @@ class FullyConnectedNet(object):
           relu_out, relu_cache = relu_forward(batch_norm_out)
           cache['relu'].append(relu_cache)
 
+          # Dropout
           dropout_out = relu_out
           if self.use_dropout:
             dropout_out, dropout_cache = dropout_forward(relu_out, self.dropout_param)
@@ -328,7 +331,7 @@ class FullyConnectedNet(object):
         last_layer_idx = self.num_layers - 1
         last_layer_cache = cache['fc'][last_layer_idx]
 
-        # backpropagate the last layer without batch norm, relu and dropout
+        # Backpropagate the last layer without batch norm, relu and dropout
         dx, dw, db = affine_backward(dx, last_layer_cache)
         w = last_layer_cache[1]
         grads['W%d' % self.num_layers] = dw + self.reg * w
@@ -336,22 +339,25 @@ class FullyConnectedNet(object):
 
         reg_loss += np.sum(w**2)
 
-        # backpropagate on the other layers, skipping the last one
+        # Backpropagate on the other layers, skipping the last one
         for layer_idx in reversed(range(self.num_layers - 1)):
           layer = (layer_idx + 1)
 
           dd = dx
 
+          # Dropout backward pass
           if self.use_dropout:
             dropout_cache = cache['dropout'][layer_idx]
             dd = dropout_backward(dx, dropout_cache)
 
+          # ReLu backward pass
           relu_cache = cache['relu'][layer_idx]
           dh = relu_backward(dd, relu_cache)
 
-          # TODO: batchnorm backprop
+          # TODO: Batchnorm backward pass
           dbatch = dh
 
+          # Linear activation backward pass
           fc_cache = cache['fc'][layer_idx]
           w = fc_cache[1]
           dx, dw, db = affine_backward(dbatch, fc_cache)

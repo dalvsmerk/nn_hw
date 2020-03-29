@@ -59,12 +59,12 @@ def affine_backward(dout, cache):
     # TODO: Implement the affine backward pass. Do not forget to reshape your #
     # dx to match the dimensions of x.                                        #
     ###########################################################################
-    # flatten input
+    # Flatten input
     N = x.shape[0]
     D = np.prod(x.shape[1:])
     X = x.reshape(N, D)
 
-    # calculate gradients
+    # Calculate gradients
     dw = np.dot(X.T, dout)
     dx = np.dot(dout, w.T).reshape(x.shape)
     db = np.sum(dout, axis=0)
@@ -116,7 +116,7 @@ def relu_backward(dout, cache):
     ###########################################################################
     # TODO: Implement the ReLU backward pass.                                 #
     ###########################################################################
-    dx = dout # .copy()
+    dx = dout
     dx[x <= 0] = 0
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -156,9 +156,9 @@ def dropout_forward(x, dropout_param):
         # Store the dropout mask in the mask variable.                        #
         # HINT: http://cs231n.github.io/neural-networks-2/#reg                #
         #######################################################################
-        # use inverse of dropout parameter
+        # Use inverse of dropout parameter to obtain a sub-network
         mask = (np.random.rand(*x.shape) < (1 - p)) / (1 - p)
-        # train using a sub-network
+        # Train using a sub-network
         out = x * mask
         #######################################################################
         #                           END OF YOUR CODE                          #
@@ -194,7 +194,7 @@ def dropout_backward(dout, cache):
         #######################################################################
         # TODO: Implement training phase backward pass for inverted dropout   #
         #######################################################################
-        # backprobagate using the same sub-network as for forward pass
+        # Backpropagate using the same sub-network as for forward pass
         dx = dout * mask
         #######################################################################
         #                          END OF YOUR CODE                           #
