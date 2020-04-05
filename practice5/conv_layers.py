@@ -30,7 +30,39 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    N, depth, input_h, input_w = x.shape
+    filter_amount, _, filter_h, filter_w = w.shape
+    stride, pad = conv_param['stride'], conv_param['pad']
+
+    # obtain activation map spatial size
+    out_h = 1 + (input_h - filter_h + 2 * pad) // stride
+    out_w = 1 + (input_w - filter_w + 2 * pad) // stride
+
+    out = np.zeros((N, filter_amount, out_h, out_w))
+
+    for i in range(N):
+      X = x[i, :, :, :]
+
+      # add padding
+      padding = ((0, 0), (pad, pad), (pad, pad))
+      X_pad = np.pad(X, padding, mode='constant')
+
+      for f in range(filter_amount):
+        kernel = w[f, :, :, :]
+
+        # perform convolution
+        for oh in range(out_h):
+          h_start = oh * stride
+          h_end = oh * stride + filter_h
+
+          for ow in range(out_w):
+            w_start = ow * stride
+            w_end = ow * stride + filter_w
+
+            # convolve slice of image with kernel
+            im = X_pad[:, h_start:h_end, w_start:w_end]
+            out[i, f, oh, ow] = np.sum(kernel * im) + b[f]
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -109,4 +141,3 @@ def max_pool_backward_naive(dout, cache):
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return dx
-
