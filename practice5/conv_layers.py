@@ -156,7 +156,26 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+    N, depth, input_h, input_w = x.shape
+    pool_h, pool_w, stride = \
+      pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+
+    out_h = (input_h - pool_h) // stride + 1
+    out_w = (input_w - pool_w) // stride + 1
+
+    out = np.zeros((N, depth, out_h, out_w))
+
+    for i in range(N):
+      for oh in range(out_h):
+        h_start = oh * stride
+        h_end = oh * stride + pool_h
+
+        for ow in range(out_w):
+          w_start = ow * stride
+          w_end = ow * stride + pool_w
+
+          x_pool = x[i, :, h_start:h_end, w_start:w_end]
+          out[i, :, oh, ow] = np.max(x_pool, axis=(1, 2))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -179,7 +198,36 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    x, pool_param = cache
+
+    N, depth, input_h, input_w = x.shape
+    pool_h, pool_w, stride = \
+      pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+
+    out_h = (input_h - pool_h) // stride + 1
+    out_w = (input_w - pool_w) // stride + 1
+
+    dx = np.zeros_like(x)
+
+    for i in range(N):
+      for oh in range(out_h):
+        h_start = oh * stride
+        h_end = oh * stride + pool_h
+
+        for ow in range(out_w):
+          w_start = ow * stride
+          w_end = ow * stride + pool_w
+
+          x_pool = x[i, :, h_start:h_end, w_start:w_end]
+          max_x = np.max(x_pool, axis=(1, 2), keepdims=True)
+
+          # Gradient with respect to input will only include the value of neuron,
+          # which was activated during forward pass, else is zero.
+          # No need to propagate on the non-activated values and they bring
+          # no influence on the cost function
+          neuron_activation_mask = x_pool == max_x
+          dx[i, :, h_start:h_end, w_start:w_end] += \
+            neuron_activation_mask * dout[i, :, oh, ow][:, None, None]
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
