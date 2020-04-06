@@ -58,7 +58,8 @@ class ThreeLayerConvNet(object):
             weight_scale * np.zeros(num_filters)
 
         # Here CONV layer doesn't change input spatial dimensions
-        fc_units = num_filters * input_h * input_w
+        # MaxPool layer does by 2 along each spatial axis
+        fc_units = num_filters * input_h * input_w // 4
 
         # After CONV and before hidden layer
         self.params['W2'] = \
@@ -102,7 +103,11 @@ class ThreeLayerConvNet(object):
         # computing the class scores for X and storing them in the scores          #
         # variable.                                                                #
         ############################################################################
-        pass
+        conv_out, conv_cache = conv_relu_pool_forward(
+            X, W1, b1, conv_param, pool_param)
+
+        fc1_out, fc1_cache = affine_relu_forward(conv_out, W2, b2)
+        scores, fc2_cache  = affine_forward(fc1_out, W3, b3)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -117,7 +122,7 @@ class ThreeLayerConvNet(object):
         # data loss using softmax, and make sure that grads[k] holds the gradients #
         # for self.params[k]. Don't forget to add L2 regularization!               #
         ############################################################################
-        pass
+        loss, dx = softmax_loss(scores, y)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
