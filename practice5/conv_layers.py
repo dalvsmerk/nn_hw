@@ -174,6 +174,7 @@ def max_pool_forward_naive(x, pool_param):
           w_start = ow * stride
           w_end = ow * stride + pool_w
 
+          # Activate only neurons with maximum value within area
           x_pool = x[i, :, h_start:h_end, w_start:w_end]
           out[i, :, oh, ow] = np.max(x_pool, axis=(1, 2))
     ###########################################################################
@@ -218,6 +219,7 @@ def max_pool_backward_naive(dout, cache):
           w_start = ow * stride
           w_end = ow * stride + pool_w
 
+          # Find neurons with maximum value within the selected area
           x_pool = x[i, :, h_start:h_end, w_start:w_end]
           max_x = np.max(x_pool, axis=(1, 2), keepdims=True)
 

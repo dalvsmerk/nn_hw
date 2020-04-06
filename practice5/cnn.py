@@ -103,10 +103,14 @@ class ThreeLayerConvNet(object):
         # computing the class scores for X and storing them in the scores          #
         # variable.                                                                #
         ############################################################################
+        # Perform forward pass on convolution layer
         conv_out, conv_cache = conv_relu_pool_forward(
             X, W1, b1, conv_param, pool_param)
 
+        # Perform forward pass on first fully connected layer
         fc1_out, fc1_cache = affine_relu_forward(conv_out, W2, b2)
+
+        # Perform forward pass on second fully connected layer
         scores, fc2_cache  = affine_forward(fc1_out, W3, b3)
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -122,16 +126,24 @@ class ThreeLayerConvNet(object):
         # data loss using softmax, and make sure that grads[k] holds the gradients #
         # for self.params[k]. Don't forget to add L2 regularization!               #
         ############################################################################
+        # Compute loss
         loss, dx = softmax_loss(scores, y)
 
+        # Perform backward pass on the second fully connected layer
         dx, dW3, db3 = affine_backward(dx, fc2_cache)
+
+        # Perform backward pass on the first fully connected layer
         dx, dW2, db2 = affine_relu_backward(dx, fc1_cache)
+
+        # Perform backward pass on convolution layer
         dx, dW1, db1 = conv_relu_pool_backward(dx, conv_cache)
 
+        # Regularize gradients
         grads['W3'], grads['b3'] = dW3 + self.reg * W3, db3
         grads['W2'], grads['b2'] = dW2 + self.reg * W2, db2
         grads['W1'], grads['b1'] = dW1 + self.reg * W1, db1
 
+        # Add regularization loss
         reg_loss = 0.5 * self.reg * (np.sum(W1**2) + np.sum(W2**2) + np.sum(W3**2))
         loss = loss + reg_loss
         ############################################################################
