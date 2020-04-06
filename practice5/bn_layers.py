@@ -64,7 +64,22 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # mean and running standard deviation, storing your result in the     #
         # running_mean and running_std variables.                             #
         #######################################################################
-        pass
+        mean = x.mean(axis=0)
+        std = x.std(axis=0)
+
+        std_sqr = std**2
+        std_stable = np.sqrt(std_sqr + eps)
+        variance = np.mean(std_sqr, axis=0)
+
+        x_centered = x - mean
+        x_norm = x_centered / std_stable
+
+        running_mean = momentum * running_mean + (1 - momentum) * mean
+        running_std = momentum * running_std + (1 - momentum) * std
+
+        out = gamma * x_norm + beta
+
+        cache = (x_centered, x_norm, variance, std, gamma, eps)
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -75,7 +90,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        x_norm = (x - running_mean) / np.sqrt(running_std**2 + eps)
+        out = gamma * x_norm + beta
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
@@ -113,7 +129,18 @@ def batchnorm_backward(dout, cache):
     #                                                                         #
     # HINT: https://kratzert.github.io/2016/02/12/understanding-the-gradient-flow-through-the-batch-normalization-layer.html #
     ###########################################################################
-    pass
+    x_centered, x_norm, variance, std, gamma, eps = cache
+    N = x_norm.shape[0]
+
+    dx_norm = dout * gamma
+    dstd = -np.sum((x_centered * dx_norm) / std**2, axis=0)
+    dvariance = 0.5 * dstd / std
+    dx_centered = dx_norm / std + 2.0 * x_centered * dvariance / N
+    dmu = -np.sum(dx_centered, axis=0)
+
+    dx     = dx_centered + dmu / N
+    dgamma = np.sum(dout * x_norm, axis=0)
+    dbeta  = np.sum(dout, axis=0)
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
