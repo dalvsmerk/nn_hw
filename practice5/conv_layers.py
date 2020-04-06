@@ -30,37 +30,37 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    N, depth, input_h, input_w = x.shape
+    N, _, input_h, input_w = x.shape
     filter_amount, _, filter_h, filter_w = w.shape
     stride, pad = conv_param['stride'], conv_param['pad']
 
-    # obtain activation map spatial size
+    # Obtain activation map spatial size
     out_h = 1 + (input_h - filter_h + 2 * pad) // stride
     out_w = 1 + (input_w - filter_w + 2 * pad) // stride
 
     out = np.zeros((N, filter_amount, out_h, out_w))
 
-    for i in range(N):
-      X = x[i, :, :, :]
+    # Add padding
+    padding = ((0, 0), (0, 0), (pad, pad), (pad, pad))
+    x_pad = np.pad(x, padding, mode='constant')
 
-      # add padding
-      padding = ((0, 0), (pad, pad), (pad, pad))
-      X_pad = np.pad(X, padding, mode='constant')
+    for i in range(N):
+      X = x_pad[i, :, :, :]
 
       for f in range(filter_amount):
         kernel = w[f, :, :, :]
 
-        # perform convolution
+        # Perform convolution
         for oh in range(out_h):
           h_start = oh * stride
-          h_end = oh * stride + filter_h
+          h_end = h_start + filter_h
 
           for ow in range(out_w):
             w_start = ow * stride
-            w_end = ow * stride + filter_w
+            w_end = w_start + filter_w
 
-            # convolve slice of image with kernel
-            im = X_pad[:, h_start:h_end, w_start:w_end]
+            # Convolve slice of image with kernel
+            im = X[:, h_start:h_end, w_start:w_end]
             out[i, f, oh, ow] = np.sum(kernel * im) + b[f]
 
     ###########################################################################
@@ -87,7 +87,50 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+
+    N, _, input_h, input_w = x.shape
+    filter_amount, _, filter_h, filter_w = w.shape
+    stride, pad = conv_param['stride'], conv_param['pad']
+
+    out_h = 1 + (input_h - filter_h + 2 * pad) // stride
+    out_w = 1 + (input_w - filter_w + 2 * pad) // stride
+
+    # Compute bias for each filter
+    db = np.sum(dout, axis=(0, 2, 3))
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+
+    # Add padding to input
+    padding = ((0, 0), (0, 0), (pad, pad), (pad, pad))
+    x_pad = np.pad(x, padding, mode='constant')
+
+    # Input gradients with padding
+    dx_pad = np.zeros_like(x_pad)
+
+    for oh in range(out_h):
+      h_start = oh * stride
+      h_end = h_start + filter_h
+
+      for ow in range(out_w):
+        w_start = ow * stride
+        w_end = w_start + filter_w
+
+        x_masked = x_pad[:, :, h_start:h_end, w_start:w_end]
+
+        # Convolve input using activation map to produce kernel gradients
+        for k in range(filter_amount):
+          gradients_filter = dout[:, k, oh, ow][:, None, None, None]
+          dw[k, :, :, :] += \
+            np.sum(x_masked * gradients_filter, axis=0)
+
+        # Convolve activation map using kernel to produce input gradients
+        for i in range(N):
+          prod = w[:, :, :, :] * dout[i, :, oh, ow][:, None, None, None]
+          dx_pad[i, :, h_start:h_end, w_start:w_end] += np.sum(prod, axis=0)
+
+    # Remove paddings from gradients with respect to input
+    dx = dx_pad[:, :, pad:-pad, pad:-pad]
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
