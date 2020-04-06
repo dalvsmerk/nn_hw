@@ -48,7 +48,29 @@ class ThreeLayerConvNet(object):
         # hidden affine layer, and keys 'W3' and 'b3' for the weights and biases   #
         # of the output affine layer.                                              #
         ############################################################################
-        pass
+        depth, input_h, input_w = input_dim
+
+        # CONV
+        self.params['W1'] = \
+            weight_scale * np.random.randn(
+                num_filters, depth, filter_size, filter_size)
+        self.params['b1'] = \
+            weight_scale * np.zeros(num_filters)
+
+        # Here CONV layer doesn't change input spatial dimensions
+        fc_units = num_filters * input_h * input_w
+
+        # After CONV and before hidden layer
+        self.params['W2'] = \
+            weight_scale * np.random.randn(fc_units, hidden_dim)
+        self.params['b2'] = \
+            weight_scale * np.random.randn(hidden_dim)
+
+        # After hidden and before output layer
+        self.params['W3'] = \
+            weight_scale * np.random.randn(hidden_dim, num_classes)
+        self.params['b3'] = \
+            weight_scale * np.zeros(num_classes)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
